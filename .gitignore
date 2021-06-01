@@ -1,0 +1,54 @@
+# ignore .nfs
+.nfs*
+*/.nfs*
+*/*/.nfs*
+
+# ignore .idea/
+.idea/
+.idea/*
+
+# ignore log and cProfile
+*.log
+run_time*
+~*
+
+# ignore data
+random_data/*
+temp*/
+temp/*
+feature_model/*
+prototypes/*
+sampling/*
+sampling-vis/*
+reconstruction/*
+
+# ignore cache
+*/*cache*
+
+
+# exp_result
+exp_result/*
+kd_exp_result/*
+exp_result_*/*
+random_data_large/*
+dash/slurm*
+rep_result_gw/*
+exp_check_weight/*
+temp/*
+temp_continuous/*
+temp_discrete/*
+
+# backup
+*/*_bc*.py
+*backup
+
+# CMakeLists and Makefiles
+KDTree_Cpp/.cache/*
+KDTree_Cpp/CMakeFiles/*
+KDTree_Cpp/*.npy
+KDTree_Cpp/makefile
+KDTree_Cpp/CMakeLists.txt
+KDTree_Cpp/CMakeCache.txt
+KDTree_Cpp/cmake_install.cmake
+KDTree_Cpp/libKDTree.a
+KDTree_Cpp/libKDTree.so

@@ -1,0 +1,95 @@
+{
+    "environment": "GridWorld",
+    "agent": "optimal_gw_agent",
+
+    "env_params_old": {
+            "start_x": 0,
+            "start_y": 0,
+            "size_x": 15,
+            "size_y": 15,
+            "goal_x": 9,
+            "goal_y": 0,
+            "goal backup": [[9, 0],[1000, 1000]],
+            "walls": [[8, 1, 0, 8], [8, 1, 9, 6]],
+            "walls_30": [[15, 1, 0, 14], [15, 1, 17, 13]],
+            "suc_prob": 1,
+            "change_time": 10000000,
+            "sparse": 1
+            },
+    "env_params": {
+            "start_x": 0,
+            "start_y": 0,
+            "size_x": 15,
+            "size_y": 15,
+            "goal_x": 8,
+            "goal_y": 0,
+            "walls": [[7, 1, 0, 7], [7, 1, 9, 6]],
+            "suc_prob": 1,
+            "change_time": 10000000,
+            "sparse": 1
+            },
+    "agent_params": {
+            "rem_type": "pri_pred",
+            "alpha": 0.25,
+            "div_actBit": 1,
+            "epsilon": 0.1,
+            "gamma": 0.998,
+            "num_planning": 10,
+            "num_branching": 10,
+            "action_mode": "discrete",
+            "num_tilings": 1,
+            "num_tiles": 30,
+            "init_weight": "0",
+
+            "pri_thrshd": 0.1,
+            "len_buffer": 1000,
+            "num_near": 8,
+            "add_prot_limit": 0.25,
+            "model_params":{"kscale": 0.0001},
+
+            "embedding_dim": 50,
+            "eigenvalue_upper_bound": 100,
+
+            "opt_a": [[[ 0,  6], [0,  7], [0, 2]],
+                      [[ 0,  6], [9, 15], [1, 2]],
+                      [[ 6,  7], [0,  7], [0]],
+                      [[ 6,  7], [9, 15], [1]],
+                      [[ 0,  8], [7,  9], [2]],
+                      [[ 8,  9], [0, 15], [1]],
+                      [[ 9, 15], [1, 15], [1, 3]],
+                      [[ 9, 15], [0,  1], [3]]],
+            "opt_prob": 0,
+
+            "nn_nodes": [256, 256, 256],
+            "nn_num_feature": 20,
+            "nn_dec_nodes": [],
+            "nn_rec_nodes": [256, 256, 256],
+
+            "nn_beta": 0.001,
+            "nn_delta": 1,
+            "nn_legal_v": 0,
+
+            "optimizer": "adam",
+            "nn_lr": 0.001,
+            "-----nn_lr_rcvs": 0.0001,
+            "nn_weight_decay": 0,
+            "nn_dropout": 0,
+            "-----nn_momentum": 0.125,
+            "nn_num_epochs": 30000,
+            "-----nn_num_epochs_rcvs": 1000,
+            "nn_batch_size": 128,
+
+            "nn_model_path": "./feature_model/",
+            "nn_model_name": "feature_embedding"
+            },
+
+    "exp_params": {
+            "num_episodes": 0,
+            "num_steps": 10000,
+            "num_runs": 5,
+            "folder": "exp_result_gw/",
+            "which_to_rec": ["step"],
+            "save_data": 1,
+            "sweep_param": 0
+            }
+}

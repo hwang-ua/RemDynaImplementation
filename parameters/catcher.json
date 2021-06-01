@@ -1,0 +1,127 @@
+{
+    "---environment": "Catcher",
+    "environment": "Catcher_dm",
+    "agent": "optimal_cgw_agent",
+
+    "env_params": {
+      "columns": 10,
+      "rows": 5,
+      "teleport": true,
+      "random_start": true
+    },
+
+    "agent_params": {
+            "graph": false,
+            "gui": 0,
+            "offline": 0,
+            "alg": "Q",
+            "dqn_c": 1,
+
+            "rem_type": "pri_pred",
+            "remDyna_mode": 0,
+            "qLearning_mode": 0,
+            "erLearning_mode":0,
+
+            "alpha": 0.25,
+            "agent_gamma": 1.0,
+            "----div_actBit": 0,
+            "----div_norm":0,
+            "epsilon": 0.1,
+            "num_planning": 10,
+            "num_branching": 10,
+
+            "action_mode": "discrete",
+            "----num_tilings": 32,
+            "----num_tiles": 4,
+            "----tc_mem_size": 4096,
+            "init_weight": "0",
+
+            "pri_thrshd": 0.1,
+            "len_buffer": 1000,
+            "num_near": 8,
+            "add_prot_limit": 0.25,
+            "similarity_limit": 0,
+            "rbf_normalize_diff": 0,
+            "model_params":{"kscale": 0.0001,"sample_single_neighbour":false,"sample_weighted_mean":true},
+
+            "----embedding_dim": 50,
+            "----eigenvalue_upper_bound": 100,
+
+            "new_opt_a": [[[0.0, 0.45], [0.0, 0.4], [0, 2]],
+                      [[0.0, 0.45], [0.6, 1.0], [1, 2]],
+                      [[0.45, 0.5], [0.0, 0.4], [0]],
+                      [[0.45, 0.5], [0.6, 1.0], [2]],
+                      [[0.0, 0.7], [0.4, 0.6], [2]],
+                      [[0.7, 0.75], [0.0, 0.95], [0]],
+                      [[0.75, 1.0], [0.0, 0.95], [0, 3]],
+                      [[0.75, 1.0], [0.95, 1.0], [3]]],
+            "old_opt_a": [[[0.0, 1.0], [0.95, 1.0], [2]],
+                      [[0.5, 0.7], [0.8, 0.95], [0]],
+                      [[0.0, 0.5], [0.0, 0.95], [0]],
+                      [[0.7, 1.0], [0.0, 0.95], [0]]],
+            "opt_a": [[[0.0, 0.45], [0.0, 0.4], [0, 2]],
+                      [[0.0, 0.45], [0.6, 1.0], [1, 2]],
+                      [[0.45, 0.5], [0.0, 0.4], [0]],
+                      [[0.45, 0.5], [0.6, 1.0], [2]],
+                      [[0.0, 0.7], [0.4, 0.6], [2]],
+                      [[0.7, 0.75], [0.0, 0.95], [0]],
+                      [[0.75, 1.0], [0.0, 0.95], [0, 3]],
+                      [[0.75, 1.0], [0.95, 1.0], [3]]],
+            "opt_prob": 0,
+
+            "nn_input_range": [0, 1],
+            "nn_env_suc_prob": 1.0,
+
+            "nn_num_tilings": 32,
+            "nn_num_tiles":4,
+            "nn_gamma": [0.998, 0.8],
+            "nn_nodes": [256, 256, 256],
+            "nn_num_feature": 32,
+            "nn_dec_nodes": [],
+            "nn_rec_nodes": [256, 256, 256],
+
+            "nn_beta": 0.1,
+            "nn_delta": 1,
+            "nn_legal_v": 0,
+            "nn_constraint": 1,
+
+            "optimizer": "AMSGrad",
+            "nn_lr": 1e-4,
+            "----nn_lr_rcvs": 0.0001,
+            "nn_weight_decay": 0,
+            "nn_dropout": 0,
+            "----nn_momentum": 0.125,
+            "nn_num_epochs": 50,
+            "----nn_num_epochs_rcvs": 100,
+            "nn_batch_size": 512,
+            "nn_model_path": "./feature_model_fixed_env/",
+            "nn_model_name": "feature_embedding_catcherDM_input[0.0, 1]_envSucProb1.0_legalv1_gamma[0.998, 0.8]_raw_epoch2000_nfeature32_beta0.01_delta0.01_env10r5c_teleportTrue_randomStartTrue",
+            "---nn_model_name": "feature_embedding_lplc_catcherDM_envSucProb1.0_legalv1"
+            },
+
+    "exp_params": {
+            "num_episodes": 0,
+            "num_steps": 200000,
+            "num_runs": 1,
+            "folder": "temp/",
+            "which_to_rec": ["step"],
+            "save_data": 1,
+            "sweep_param": 0,
+            "random_seed": 512
+            },
+
+    "representation": "tile_code",
+
+    "sweeps": {
+        "agent_params": {"alpha":[0.25, 0.5, 0.125, 1.0],
+                         "num_near":[8, 16, 32, 64],
+                         "add_prot_limit":[0.0625, 0.125, 0.25, 0.5]
+                        },
+        "env_params": {},
+        "exp_params": {}
+    },
+
+    "temp": {
+        "rem_type": ["random_BufferOnly", "random", "pri", "random_pred", "pri_pred"]
+    }
+}

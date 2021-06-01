@@ -1,0 +1,57 @@
+{
+    "environment": "RiverSwim",
+    "agent": "opt_action",
+    
+    "env_params": {
+            
+            },
+    
+    "agent_params": {
+            "rem_type": "pri_pred",
+            "alpha": 0.125,
+            "epsilon": 0,
+            "gamma": 0.95,
+            "num_planning": 10,
+            "num_branching": 10,
+            "action_mode": "discrete",
+            "num_tilings": 1,
+            "num_tiles": 16,
+            "tc_mem_size": 512,
+            "init_weight": "1",
+
+            "pri_thrshd": 0.1,
+            "len_buffer": 1000,
+            "num_near": 8,
+            "add_prot_limit": 0.0625,
+            "model_params":{"kscale": 0.01},
+
+            "opt_a": 1
+
+            },
+            
+    "exp_params": {
+            "num_episodes": 1,
+            "num_steps": 10000,
+            "num_runs": 2000,
+            "folder": "exp_result_rs/optimalPolicy/",
+            "save_data": 1,
+            "sweep_param": 0,
+            "which_to_rec": ["return"]
+
+            },
+    
+    "representation": "tile_code",
+
+    "sweeps": {
+        "modelSize": [1000],
+        "bufferLen": [1000],
+        "gamma": [0.95],
+        "lambda": [0.0],
+        "epsilon": [0.1],
+        "sigscale": [0.00005, 0.0001, 0.0002],
+        "replay": [5],
+        "optInit": [-1],
+        "agent": ["REM_Dyna", "Q_learning", "opt_action"],
+        "alpha": [0.0625, 0.125, 0.25, 0.5, 1.0]
+    }
+}

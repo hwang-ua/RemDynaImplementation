@@ -1,0 +1,388 @@
+import sys
+import os
+import numpy as np
+import pickle
+import json
+from utils.distance_matrix_func import *
+import time
+import utils.ann_lrpaper_good as ann
+import utils.recover_state as rcs
+
+"""
+Discrete grid world
+"""
+
+def construct_training_set(traj_list, num, len_state):
+    print("Preprocessing data ...")
+    traj_list = traj_list[:num] if num > 0 else traj_list
+    marginal = np.zeros((len(traj_list) * 50, 2 + len_state))
+    pointer = 0
+    successor = {}
+    start = time.time()
+    for tidx in range(len(traj_list)):
+        if (tidx+1) % 500 == 0:
+            print("line", tidx+1, "time", time.time() - start)
+            start = time.time()
+        traj = traj_list[tidx]
+        for step in range(0, len(traj) - 1):
+            s = traj[step]
+            # marginal = np.concatenate((marginal, np.array([[tidx, step, s[0], s[1]]])), axis=0)
+            marginal[pointer] = np.array([[tidx, step, s[0], s[1]]])
+            pointer += 1
+
+            successor[str(np.array([tidx, step, s[0], s[1]], dtype=float))] = traj[step + 1 :] #traj[1:]#
+            # print(str(np.array([tidx, step, s[0], s[1]], dtype=float)), np.array([tidx, step, s[0], s[1]]))
+    return marginal[:pointer], successor
+
+def construct_training_set_continuous(traj_ary, num, len_state):
+    # print("Preprocessing data ", end=" ")
+    # traj_ary = traj_ary[:num] if num > 0 else traj_ary
+    # length = len(traj_ary)
+    # marginal = np.zeros((len(traj_ary) - 1, 2 + len_state))
+    #
+    # successor = {}
+    # for step in range(0, len(traj_ary) - 1):
+    #     s = traj_ary[step]
+    #     marginal[step] = np.array([0, step, s[0], s[1]])
+    #     key = str(marginal[step])
+    #     successor[key] = traj_ary[step + 1: min(length, step + 50)]
+    #
+    #     if step % 500 == 0:
+    #         print(".", end=" ")
+    # print("Done")
+    # return marginal, successor
+    print("Preprocessing data ", end=" ")
+    marginal = np.zeros((len(traj_ary) - 49, 50, len_state))
+    for i in range(0, len(traj_ary) - 49):
+        marginal[i] = traj_ary[i: i + 50]
+    print("Done")
+    return marginal, None
+
+def check_distance(data, size_x, size_y, goal, check_rep=False):
+    for b in range(size_y):
+        for a in range(size_x):
+            if check_rep:
+                print("{:8.4f}".format(np.linalg.norm(data[a, b] - data[goal[0], goal[1]])),
+                      "({:6.4f})".format(data[a, b].sum()), end=' ')
+            else:
+                print("{:8  .4f}".format(np.linalg.norm(data[a, b] - data[goal[0], goal[1]])), end=' ')
+        print()
+    print()
+
+
+def one_hot_feature(data, size_x, size_y):
+    # One-hot encoding
+    feature_ary = np.zeros((len(data), size_x * size_y))
+    for i in range(len(data)):
+        xi, yi = data[i]
+        feature_ary[i][xi + yi * size_x] = 1
+    return feature_ary
+
+def continuous(mode="xy"):
+    # import utils.ann_lrpaper_backup as ann
+    pw = False
+    bw = False
+    catcher = True
+
+    if pw or bw:
+        jsonfile = "parameters/continuous_gridworld.json"
+    elif catcher:
+        jsonfile = "parameters/catcher.json"
+        columns = 50
+        rows = 100
+        teleport = False
+        random_start = True
+    else:
+        print("goodbye world")
+        exit()
+
+    json_dat = open(jsonfile, 'r')
+    exp = json.load(json_dat)
+    json_dat.close()
+
+    suc_prob = 1.0
+
+    num_tilings = 32 #exp["agent_params"]["num_tilings"]
+    num_tiles = 4 #exp["agent_params"]["num_tiles"]
+
+    num_node = exp["agent_params"]["nn_nodes"]
+    num_feature = exp["agent_params"]["nn_num_feature"]
+    optimizer = exp["agent_params"]["optimizer"]
+    lr = exp["agent_params"]["nn_lr"]
+    wd = exp["agent_params"]["nn_weight_decay"]
+    dropout = exp["agent_params"]["nn_dropout"]
+    # momentum = exp["agent_params"]["nn_momentum"]
+    num_epochs = 20000#exp["agent_params"]["nn_num_epochs"]
+    batch_size = 128#exp["agent_params"]["nn_batch_size"]
+    path = exp["agent_params"]["nn_model_path"]
+    file_name = "feature_embedding"#exp["agent_params"]["nn_model_name"]
+    legalv = int(sys.argv[1])
+
+    if pw:
+        file_name += "_lplc_pw_envSucProb" + str(suc_prob)
+    elif bw:
+        file_name += "_lplc_continuous_envSucProb" + str(suc_prob) + "_legalv" + str(legalv)
+    elif catcher:
+        file_name += "_lplc_catcher_envSucProb" + str(suc_prob) + "_legalv" + str(legalv)
+
+
+    # goal_x = exp["env_params"]["goal_x"]
+    # goal_y = exp["env_params"]["goal_y"]
+
+    # # load parameters
+    # if len(sys.argv) > 2:
+    #     print("here")
+    #     exit()
+    #     num_feature = int(sys.argv[1])
+    #     lr = float(sys.argv[2])
+    #     batch_size = int(sys.argv[3])
+
+    print("======= Parameters =======")
+    print("Number of feature", num_feature)
+    print("Learning rate", lr)
+    print("Batch size", batch_size)
+    print()
+
+    if len(sys.argv) != 5:
+        folder = "temp"
+    else:
+        folder = "temp/continuous_" + str(num_feature) + "_" + str(lr) + "_" + str(batch_size)
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+
+    # # test set
+    # len_grid = 0.005
+    # x = np.arange(0, 1, len_grid)
+    # y = np.arange(0, 1, len_grid)
+    # test = []
+    # for xpt in x:
+    #     for ypt in y:
+    #         test.append([xpt, ypt])
+    # test = np.array(test)
+    # test_set = test * 2 - 1.0
+
+    if (pw or bw) and mode == "one_hot":
+        len_state = num_tilings * num_tiles ** 2
+    elif (pw or bw) and mode == "xy":
+        len_state = 2
+    elif catcher:
+        len_state = rows * columns
+
+    """
+    Training
+    """
+    print("Neural net")
+    nn = ann.NN(len_state, num_node, num_feature, lr,
+                weight_decay=wd, optimizer=optimizer, dropout=dropout, mode=mode, img_catch=catcher)
+    if pw:
+        training_set_ori = np.load("./random_data/fixed_env_suc_prob_"+str(suc_prob)
+                                   +"/pw_noGoal_raw_training_set_randomStart_0opt_[0.998, 0.8]gamma_1pts_x1_x100000.npy")
+    elif bw:
+        training_set_ori = np.load("./random_data/fixed_env_suc_prob_"+str(suc_prob)
+                                   +"/cgw_noGoal_separateTC32x4_training_set_randomStart_0opt_[0.998, 0.8]gamma_1pts_x1_x100000.npy")
+    elif catcher:
+        training_set_ori = np.load("random_data/fixed_env_suc_prob_1.0/catcher_dm_" + str(rows) + "r" + str(columns) + \
+                           "c_noGoal_opt_[0.998, 0.8]gamma_1pts_x1_x200000-stoc.npy")
+
+    print(training_set_ori.shape)
+    training_set = training_set_ori[:, :len_state] * 2.0 - 1
+    # training_set, successor = construct_training_set_continuous(training_set, -1, len_state)
+
+    # loss_rec = nn.training(training_set, successor, 1, 1, num_epochs, batch_size=batch_size, legalv=legalv,
+    #                        print_loss=True)
+    loss_rec = nn.training(training_set, None, 1, 1, num_epochs, batch_size=batch_size, legalv=legalv,
+                           print_loss=True)
+    nn.saving(path, file_name)
+    np.save(folder + "/rep_loss_legal"+str(legalv), loss_rec)
+    nn.loading(path, file_name)
+
+    # Test
+    # rep, loss = nn.test(test_set)
+    # rep, loss = nn.test(training_set_ori[:, :2])
+
+    # """
+    # Recover state from representation
+    # """
+    # for i in range(len(rep)):
+
+    #     rep[i] = rep[i] / np.linalg.norm(rep[i])
+    # print("After", np.linalg.norm(rep, axis=1))
+    # # print(rep.shape, training_set_ori[:, :2].shape)
+    #
+    # num_rec_node = exp["agent_params"]["nn_rec_nodes"]
+    # if continuous:
+    #     print(rep.shape, training_set_ori.shape)
+    #     recv = rcs.RecvState(num_feature, num_rec_node, len_state, lr, weight_decay=1e-5)
+    #     # loss_rcvs = recv.training(rep, training_set_ori[:, :2], 100, batch_size=512)
+    # else:
+    #     recv = rcs.RecvState(num_feature, num_rec_node, size_x * size_y, lr, weight_decay=1e-5)
+    #     loss_rcvs = recv.training(rep, training_set_ori[:-1, :2], 100, batch_size=32)
+    # # recv.saving(path, file_name+"_seperateRcvs")
+    # # np.save(folder + "/recv_loss", loss_rcvs)
+    # # load model
+    # recv.loading(path, file_name+"_seperateRcvs")
+    # recved_f, loss = recv.test(rep, test_set)
+    # print("Recover state: Loss =", loss)
+    # print("Length", len(rep), len(test_set), len(recved_f))
+    # recv_state = np.concatenate((test_set, recved_f), axis=1)
+    # np.save(folder + "/recv_state", recv_state)
+
+    print("Test set loss =", loss)
+    np.save(folder + "/test_points", test)
+    # np.save("temp/test_estimation", rec)#.reshape(test_len))
+    np.save(folder + "/test_representation", rep)
+    feature = test_set[:, :int(len(test_set[0]) // 2)]
+    np.save(folder + "/test_feature", feature)  # .reshape(test_len))
+    expct = test_set[:, int(len(test_set[0]) // 2):]
+    np.save(folder + "/test_expcted", expct)  # .reshape(test_len))
+    print("data saved in folder", folder)
+    print("Done")
+
+
+def discrete(mode="xy"):
+
+    jsonfile = "parameters/gridworld.json"
+    json_dat = open(jsonfile, 'r')
+    exp = json.load(json_dat)
+    json_dat.close()
+
+    num_node = exp["agent_params"]["nn_nodes"]
+    num_feature = exp["agent_params"]["nn_num_feature"]
+    optimizer = exp["agent_params"]["optimizer"]
+    lr = exp["agent_params"]["nn_lr"]
+    wd = exp["agent_params"]["nn_weight_decay"]
+    dropout = exp["agent_params"]["nn_dropout"]
+    # momentum = exp["agent_params"]["nn_momentum"]
+    num_epochs = 20000#exp["agent_params"]["nn_num_epochs"]
+    batch_size = 128 #exp["agent_params"]["nn_batch_size"]
+    path = exp["agent_params"]["nn_model_path"]
+    file_name = exp["agent_params"]["nn_model_name"]
+    file_name += "_discrete"
+
+    size_x = exp["env_params"]["size_x"]
+    size_y = exp["env_params"]["size_y"]
+    goal_x = exp["env_params"]["goal_x"]
+    goal_y = exp["env_params"]["goal_y"]
+    # if goal_x >= size_x or goal_y >= size_y:
+    #     goal_x, goal_y = 9, 0
+    # load parameters
+    if len(sys.argv) > 2:
+        num_feature = int(sys.argv[1])
+        lr = float(sys.argv[2])
+        batch_size = int(sys.argv[3])
+
+    print("======= Parameters =======")
+    print("Number of feature", num_feature)
+    print("Learning rate", lr)
+    print("Batch size", batch_size)
+    print()
+
+    if len(sys.argv) != 5:
+        folder = "temp"
+    else:
+        folder = "temp/" + str(num_feature) + "_" + str(lr) + "_" + str(batch_size)
+        if not os.path.exists(folder):
+            os.mkdir(folder)
+
+    # test set
+    test = []
+    for y in range(size_y):
+        for x in range(size_x):
+            test.append([x, y])
+    test.append([goal_x, goal_y])
+    if mode == "one_hot":
+        test_set = one_hot_feature(test, size_x, size_y)
+    elif mode == "xy":
+        test_set = np.array(test) / float(size_x) * 2 - 1
+
+    if mode == "one_hot":
+        len_state = size_x * size_y
+    elif mode == "xy":
+        len_state = 2
+
+    # Training
+    print("Neural net")
+
+    nn = ann.NN(len_state, num_node, num_feature, lr,
+                weight_decay=wd, optimizer=optimizer, dropout=dropout, mode = mode, img_catch=catcher)
+
+    # training_set = np.load("./random_data/trajectory_1000randomPts_50step_xyRaw.npy")
+    # print(training_set.shape)
+    with open("./random_data/fixed_env_suc_prob_1.0/dgw_random_trajectory_randomPts9625_step50_opt0_xyRaw_trajectoryOnly.pkl", 'rb') as f:
+        trajectory = pickle.load(f)
+    normalize_traj = []
+    # check = np.zeros((size_x, size_y))
+    for t in trajectory:
+        normalize_traj.append([])
+        for s in t:
+            normalize_traj[-1].append([s[0]/size_x*2 - 1, s[1]/size_y*2 - 1])
+            # check[s[0], s[1]] += 1
+    # import matplotlib.pyplot as plt
+    # plt.imshow(check)
+    # plt.colorbar()
+    # plt.show(block=True)
+
+    trajectory = normalize_traj
+    print(len(trajectory))
+    # training_set, successor = construct_training_set(trajectory, -1, len_state)
+    training_set = trajectory
+
+
+    # print("========== check distribution ==========")
+    # count = {}
+    # for d in training_set:
+    #     d = np.copy(d)
+    #     f = d[2:]
+    #     f = tuple(f)
+    #     if f in count.keys():
+    #         count[f] += 1
+    #     else:
+    #         count[f] = 1
+    # count_array = np.zeros((size_x, size_y))
+    # print(count_array.shape)
+    # for k in count.keys():
+    #     #s = recover_oneHot(np.array(k), size_x, size_y)
+    #     count_array[int(k[0]), int(k[1])] = count[k]
+    #
+    # for y in range(size_x):
+    #     for x in range(size_y):
+    #         print("{:4d}".format(int(count_array[x, y])), end=" ")
+    #     print()
+    # print()
+
+
+    # training_s, training_sp = training_set[:, :len_state], training_set[:, len_state:]
+
+    # loss_rec = nn.training(training_set, successor, size_x, size_y, num_epochs, batch_size=batch_size, print_loss=True)
+    loss_rec = nn.training(training_set, None, size_x, size_y, num_epochs, batch_size=batch_size, print_loss=True)
+    nn.saving(path, file_name)
+    np.save(folder + "/loss", loss_rec)
+    nn.loading(path, file_name)
+
+    # Test
+    print(np.max(test_set), np.min(test_set))
+    rep, loss = nn.test(test_set)
+
+    # Show test result
+    result = np.zeros((size_x, size_y, num_feature))
+    for ti in range(len(test) - 1):
+        result[test[ti][0], test[ti][1]] = rep[ti]
+    goal = test[-1]
+
+    check_distance(result, size_x, size_y, goal, check_rep=True)
+
+    print("Test set loss =", loss)
+    np.save(folder + "/test_points", test)
+    # np.save("temp/test_estimation", rec)#.reshape(test_len))
+    np.save(folder + "/test_representation", rep)
+    feature = test_set[:, :int(len(test_set[0]) // 2)]
+    np.save(folder + "/test_feature", feature)  # .reshape(test_len))
+    expct = test_set[:, int(len(test_set[0]) // 2):]
+    np.save(folder + "/test_expcted", expct)  # .reshape(test_len))
+    print("data saved in folder", folder)
+    print("Done")
+
+
+if __name__ == "__main__":
+    # discrete(mode="xy")
+    continuous(mode="xy")

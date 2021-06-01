@@ -1,0 +1,95 @@
+{
+    "environment": "PuddleWorld",
+    "agent": "optimal_cgw_agent",
+
+    "env_params": {
+            },
+
+    "agent_params": {
+            "graph": false,
+            "gui": 0,
+            "offline": 0,
+            "alg": "Q",
+            "dqn_c": 1,
+
+            "rem_type": "pri_pred",
+            "remDyna_mode": 0,
+            "qLearning_mode": 0,
+            "erLearning_mode":0,
+
+            "alpha": 0.25,
+            "agent_gamma": 1.0,
+            "epsilon": 0.1,
+            "num_planning": 10,
+            "num_branching": 10,
+
+            "action_mode": "discrete",
+            "init_weight": "0",
+
+            "pri_thrshd": 0.1,
+            "len_buffer": 1000,
+            "num_near": 8,
+            "add_prot_limit": 0.25,
+            "similarity_limit": 0,
+            "rbf_normalize_diff": 0,
+            "model_params":{"kscale": 0.0001,"sample_single_neighbour":false,"sample_weighted_mean":true},
+            "opt_a": [],
+            "opt_prob": 0,
+
+            "nn_input_range": [0, 1],
+            "nn_env_suc_prob": 1.0,
+
+            "nn_num_tilings": 32,
+            "nn_num_tiles":4,
+            "nn_gamma": [0.998, 0.8],
+            "nn_nodes": [256, 256, 256],
+            "nn_nodes_AE": [256, 128, 64],
+            "nn_num_feature": 32,
+            "nn_dec_nodes": [],
+            "nn_dec_nodes_AE": [64, 128, 256],
+            "nn_rec_nodes": [256, 256, 256],
+
+            "nn_beta": 0.1,
+            "nn_delta": 1,
+            "nn_legal_v": 0,
+            "nn_constraint": 1,
+
+            "optimizer": "AMSGrad",
+            "nn_lr": 1e-4,
+            "nn_weight_decay": 0,
+            "nn_dropout": 0,
+            "nn_num_epochs": 50,
+            "nn_batch_size": 512,
+            "nn_model_path": "./feature_model_fixed_env/",
+            "nn_model_name_AE": "AE_feature_embedding_pw_input[0.0, 1]_envSucProb1.0_legalv-1_gamma[0.998, 0.8]_tc32x4+rewardScaled40_weight1.0_epoch1000_nfeature32_constraint0",
+            "nn_model_name_noCons": "feature_embedding_pw_input[0.0, 1]_envSucProb1.0_legalv-1_gamma[0.998, 0.8]_tc32x4+rewardScaled40_weight1.0_epoch1000_nfeature32_constraint0",
+            "nn_model_name_new": "feature_embedding_pw_input[0.0, 1]_envSucProb1.0_legalv0_gamma[0.998, 0.8]_tc32x4+rewardScaled40_weight1.0_epoch1000_nfeature32_beta0.01_delta0.01",
+            "nn_model_name_newTC": "feature_embedding_pw_input[0.0, 1]_envSucProb1.0_legalv1_gamma[0.998, 0.8]_tc32x4_epoch1000_nfeature32_beta0.01_delta0.01"
+            },
+
+    "exp_params": {
+            "num_episodes": 200,
+            "num_steps": 100000,
+            "num_runs": 1,
+            "folder": "temp/",
+            "which_to_rec": ["step"],
+            "save_data": 1,
+            "sweep_param": 0,
+            "random_seed": 512
+            },
+
+    "representation": "tile_code",
+
+    "sweeps": {
+        "agent_params": {"alpha":[0.25, 0.5, 0.125, 1.0],
+                         "num_near":[8, 16, 32, 64],
+                         "add_prot_limit":[0.0625, 0.125, 0.25, 0.5]
+                        },
+        "env_params": {},
+        "exp_params": {}
+    },
+
+    "temp": {
+        "rem_type": ["random_BufferOnly", "random", "pri", "random_pred", "pri_pred"]
+    }
+}

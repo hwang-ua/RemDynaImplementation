@@ -1,0 +1,55 @@
+{
+    "environment": "MountainCar",
+    "agent": "REM_Dyna",
+    
+    "env_params": {
+            "sparse": 1
+            },
+    
+    "agent_params": {
+            "alpha": 0.125,
+            "epsilon": 0.1,
+            "gamma": 0.9,
+            "num_planning": 10,
+            "num_branching": 1,
+            "pri_threshold": 0.0001,
+            "action_mode": "discrete",
+            "num_tilings": 3,
+            "num_tiles": 16,
+            "tc_mem_size": 2048,
+            "init_weight": "0",
+            
+            "len_buffer": 1000,
+            "size_block": 100,
+            "num_near": 3,
+            "add_prot_limit": 0.8
+            },
+            
+    "exp_params": {
+            "num_episodes": 200,
+            "num_steps": 5000000,
+            "num_runs": 10,
+            "which_to_rec": ["step"],
+            },
+    
+    "representation": "tile_code",
+    "representation_parameters": {
+        "tilings": 1,
+        "tiles": 16,
+        "mem_size": 2048,
+        "pairs": 0
+    },
+
+    "sweeps": {
+        "modelSize": [1000],
+        "bufferLen": [1000],
+        "gamma": [0.95],
+        "lambda": [0.0],
+        "epsilon": [0.1],
+        "sigscale": [0.00005, 0.0001, 0.0002],
+        "replay": [5],
+        "optInit": [-1],
+        "agent": ["OnPolicyPrPredDyna"],
+        "alpha": [0.0625, 0.125, 0.25, 0.5, 1.0]
+    }
+}
